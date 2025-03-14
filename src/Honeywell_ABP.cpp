@@ -7,6 +7,7 @@ Honeywell_ABP::Honeywell_ABP(uint8_t address, float p_min, float p_max, String u
   set_unit(unit_string);
 }
 
+
 void Honeywell_ABP::set_unit(String unit_string) {
   if (unit_string == "psi")
     _unit = UNIT_PSI;
@@ -23,6 +24,7 @@ void Honeywell_ABP::set_unit(String unit_string) {
   else
     _unit = UNIT_UNKNOWN;
 }
+
 
 void Honeywell_ABP::update() {
   Wire.requestFrom(_address, (uint8_t)4);
