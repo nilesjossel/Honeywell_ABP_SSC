@@ -38,6 +38,11 @@ void Honeywell_SSC::update() {
     int result = i2c_read_blocking(_i2c, _address, buffer, 4, false);
     if (result != 4) {
         _status = STATUS_DIAGNOTIC;
+
+        #ifdef DEBUG
+        printf("Honeywell_SSC: Failed to read from sensor at address 0x%02X. Result: %d\n", _address, result);
+        #endif
+
         return;
     }
 
@@ -45,8 +50,22 @@ void Honeywell_SSC::update() {
     _bridge_data = ((buffer[0] & 0x3F) << 8) | buffer[1];
     _temperature_data = (buffer[2] << 3) | (buffer[3] >> 5);
 
+    // Check for diagnostic fault
+    if (_status == STATUS_DIAGNOTIC) {
+        #ifdef DEBUG
+        printf("Honeywell_SSC: Diagnostic fault detected for sensor at address 0x%02X.\n", _address);
+        #endif
+
+        return;
+    }
+
     _pressure = raw_to_pressure(_bridge_data);
     _temperature = raw_to_temperature(_temperature_data);
+
+    #ifdef DEBUG
+    printf("Honeywell_SSC: Pressure: %.2f %s, Temperature: %.2f °C\n", _pressure, unit(), _temperature);
+    #endif
+
 }
 
 const char* Honeywell_SSC::unit() const {
