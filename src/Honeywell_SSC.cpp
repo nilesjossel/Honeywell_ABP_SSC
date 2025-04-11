@@ -33,15 +33,14 @@ float Honeywell_SSC::raw_to_temperature(uint16_t output) {
     return ((float)output * 200.0 / 2047.0) - 50.0;
 }
 
+/* Original update() code
 void Honeywell_SSC::update() {
     uint8_t buffer[4];
     int result = i2c_read_blocking(_i2c, _address, buffer, 4, false);
     if (result != 4) {
         _status = STATUS_DIAGNOTIC;
 
-        #ifdef DEBUG
         printf("Honeywell_SSC: Failed to read from sensor at address 0x%02X. Result: %d\n", _address, result);
-        #endif
 
         return;
     }
@@ -52,21 +51,45 @@ void Honeywell_SSC::update() {
 
     // Check for diagnostic fault
     if (_status == STATUS_DIAGNOTIC) {
-        #ifdef DEBUG
         printf("Honeywell_SSC: Diagnostic fault detected for sensor at address 0x%02X.\n", _address);
-        #endif
-
+        printf("Raw data: 0x%02X 0x%02X 0x%02X 0x%02X\n", buffer[0], buffer[1], buffer[2], buffer[3]);
         return;
     }
 
     _pressure = raw_to_pressure(_bridge_data);
     _temperature = raw_to_temperature(_temperature_data);
 
-    #ifdef DEBUG
     printf("Honeywell_SSC: Pressure: %.2f %s, Temperature: %.2f °C\n", _pressure, unit(), _temperature);
-    #endif
+    
+}*/
 
+
+//Debugging version of update() function
+void Honeywell_SSC::update() {
+    uint8_t buffer[4];
+    int result = i2c_read_blocking(_i2c, _address, buffer, 4, false);
+    if (result != 4) {
+        _status = STATUS_DIAGNOTIC;
+
+        printf("Honeywell_SSC: Failed to read from sensor at address 0x%02X. Result: %d\n", _address, result);
+        return;
+    }
+
+    printf("Raw data: 0x%02X 0x%02X\n", buffer[0], buffer[1]);
+
+    _status = (Status)((buffer[0] >> 6) & 0x03);
+    _bridge_data = ((buffer[0] & 0x3F) << 8) | buffer[1];
+
+    if (_status == STATUS_DIAGNOTIC) {
+        printf("Honeywell_SSC: Diagnostic fault detected for sensor at address 0x%02X.\n", _address);
+        return;
+    }
+
+    _pressure = raw_to_pressure(_bridge_data);
+
+    printf("Honeywell_SSC: Pressure: %.2f %s\n", _pressure, unit());
 }
+
 
 const char* Honeywell_SSC::unit() const {
     switch (_unit) {
