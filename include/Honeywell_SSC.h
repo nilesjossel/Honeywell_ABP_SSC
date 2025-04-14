@@ -83,5 +83,12 @@ float _pressure;            // pressure converted from raw data
 float _temperature;         // temperature converted from raw data
 };
 
+template <typename T>
+T constrain(T x, T a, T b) {
+    if (x < a) return a;
+    if (x > b) return b;
+    return x;
+}
+
 
 #endif //HONEYWELL_SSC_H

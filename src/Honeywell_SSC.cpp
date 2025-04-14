@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 Honeywell_SSC::Honeywell_SSC(i2c_inst_t* i2c, uint8_t address, float p_min, float p_max, const char* unit_string)
     : _i2c(i2c), _address(address), _p_min(p_min), _p_max(p_max) {
     set_unit(unit_string);
@@ -26,24 +27,25 @@ void Honeywell_SSC::set_unit(const char* unit_string) {
 }
 
 float Honeywell_SSC::raw_to_pressure(uint16_t output) {
-    return ((float)(output - _output_min) * (_p_max - _p_min) / (_output_max - _output_min)) + _p_min;
+    return ((float)(constrain(output, _output_min, _output_max) -_output_min) * (_p_max - _p_min) / (_output_max - _output_min)) + _p_min;
 }
 
+//Not needed in this case
 float Honeywell_SSC::raw_to_temperature(uint16_t output) {
     return ((float)output * 200.0 / 2047.0) - 50.0;
 }
 
-/* Original update() code
+/* Original update() function
 void Honeywell_SSC::update() {
     uint8_t buffer[4];
     int result = i2c_read_blocking(_i2c, _address, buffer, 4, false);
     if (result != 4) {
         _status = STATUS_DIAGNOTIC;
-
         printf("Honeywell_SSC: Failed to read from sensor at address 0x%02X. Result: %d\n", _address, result);
-
         return;
     }
+
+    printf("Raw data: 0x%02X 0x%02X 0x%02X 0x%02X\n", buffer[0], buffer[1], buffer[2], buffer[3]);
 
     _status = (Status)((buffer[0] >> 6) & 0x03);
     _bridge_data = ((buffer[0] & 0x3F) << 8) | buffer[1];
@@ -86,8 +88,7 @@ void Honeywell_SSC::update() {
     }
 
     _pressure = raw_to_pressure(_bridge_data);
-
-    printf("Honeywell_SSC: Pressure: %.2f %s\n", _pressure, unit());
+    //printf("Honeywell_SSC: Pressure: %.2f %s\n", _pressure, unit());
 }
 
 
